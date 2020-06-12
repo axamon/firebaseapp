@@ -16,6 +16,7 @@ var client *firestore.Client
 
 var auth = flag.String("auth", "auth.json", "File autenticazione  di google")
 var coll = flag.String("coll", "progetti", "Collection to use")
+var doc = flag.String("doc", "test", "Document ID")
 
 func main() {
 
@@ -44,13 +45,21 @@ func main() {
 		log.Fatalf("Failed adding alovelace: %v", err)
 	}
 
+	var m = make(map[string]interface{})
+
+	_, err = client.Collection(*coll).Doc(*doc).Set(ctx, m)
+	if err != nil {
+		log.Println("Setting Doc error: ", err)
+	}
+
 	err = GetCollection(ctx, *coll)
 	if err != nil {
-		log.Println(err)
+		log.Println("Getting collection error: ", err)
 	}
 
 }
 
+// GetCollection retrieves a collection from firebase db.
 func GetCollection(ctx context.Context, collection string) error {
 
 	iter := client.Collection(collection).Documents(ctx)
