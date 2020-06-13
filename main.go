@@ -16,7 +16,7 @@ var client *firestore.Client
 
 var auth = flag.String("auth", "auth.json", "File autenticazione  di google")
 var coll = flag.String("coll", "progetti", "Collection to use")
-var doc = flag.String("doc", "test", "Document ID")
+var docID = flag.String("doc", "test", "Document ID")
 
 func main() {
 
@@ -47,33 +47,52 @@ func main() {
 
 	var m = make(map[string]interface{})
 
-	_, err = client.Collection(*coll).Doc(*doc).Set(ctx, m)
+	_, err = client.Collection(*coll).Doc(*docID).Set(ctx, m)
 	if err != nil {
 		log.Println("Setting Doc error: ", err)
 	}
 
-	err = GetCollection(ctx, *coll)
+	doc, err := GetCollection(ctx, *coll)
 	if err != nil {
 		log.Println("Getting collection error: ", err)
+	}
+
+	fmt.Println(doc.Data())
+
+	err = DeleteDoc(ctx, *coll, *docID)
+	if err != nil {
+		log.Println(err)
 	}
 
 }
 
 // GetCollection retrieves a collection from firebase db.
-func GetCollection(ctx context.Context, collection string) error {
+func GetCollection(ctx context.Context, collection string) (*firestore.DocumentSnapshot, error) {
+
+	var doc *firestore.DocumentSnapshot
+	var err error
 
 	iter := client.Collection(collection).Documents(ctx)
+
 	for {
-		doc, err := iter.Next()
+		doc, err = iter.Next()
 		if err == iterator.Done {
 			break
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
-		fmt.Println(doc.Data())
+	}
+
+	return doc, nil
+}
+
+// DeleteDoc deletes a doc from a collection.
+func DeleteDoc(ctx context.Context, collection, docID string) error {
+	_, err := client.Collection(collection).Doc(docID).Delete(ctx)
+	if err != nil {
+		return err
 	}
 
 	return nil
-
 }
