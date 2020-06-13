@@ -52,12 +52,14 @@ func main() {
 		log.Println("Setting Doc error: ", err)
 	}
 
-	doc, err := GetCollection(ctx, *coll)
+	documents, err := GetCollection(ctx, *coll)
 	if err != nil {
 		log.Println("Getting collection error: ", err)
 	}
 
-	fmt.Println(doc.Data())
+	for _, document := range documents {
+		fmt.Println(document.Data())
+	}
 
 	err = DeleteDoc(ctx, *coll, *docID)
 	if err != nil {
@@ -67,32 +69,28 @@ func main() {
 }
 
 // GetCollection retrieves a collection from firebase db.
-func GetCollection(ctx context.Context, collection string) (*firestore.DocumentSnapshot, error) {
+func GetCollection(ctx context.Context, collection string) ([]*firestore.DocumentSnapshot, error) {
 
-	var doc *firestore.DocumentSnapshot
-	var err error
-
+	var docs []*firestore.DocumentSnapshot
 	iter := client.Collection(collection).Documents(ctx)
 
 	for {
-		doc, err = iter.Next()
+		doc, err := iter.Next()
 		if err == iterator.Done {
 			break
 		}
+		docs = append(docs, doc)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	return doc, nil
+	return docs, nil
 }
 
 // DeleteDoc deletes a doc from a collection.
 func DeleteDoc(ctx context.Context, collection, docID string) error {
 	_, err := client.Collection(collection).Doc(docID).Delete(ctx)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
